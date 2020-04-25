@@ -1,5 +1,11 @@
+# 如果网络无问题，可以打开如下注释，不用本地的tar包下的源代码
+# ARG APOLLO_URL 开头的行
+# RUN wget ${APOLLO_URL} 开头的行
+# 注释如下行
+# COPY apollo-${VERSION}.tar.gz /tmp/
+# RUN mv /tmp/apollo-${VERSION}.tar.gz 开头的行
 FROM maven:alpine
-LABEL maintainer="michael <michaelliu99@sina.com>"
+LABEL maintainer="devops <devops@devops.com>"
 
 ENV VERSION=1.6.0 \
     PORTAL_PORT=8070 \
@@ -20,14 +26,15 @@ COPY configservice-bootstrap.yml /
 COPY docker-entrypoint /usr/local/bin/docker-entrypoint
 COPY healthcheck    /usr/local/bin/healthcheck
 
+# 由于国内github的速度超慢问题，可以选择屏蔽掉从github下载，如果是docker hub自动构建可以选择wget
 COPY apollo-${VERSION}.tar.gz /tmp/
-
+# 加入EUREKA IP可以指定为宿主机
 ENV EUREKA_IP ""
 
-RUN mv /tmp/apollo-${VERSION}.tar.gz /apollo.tar.gz && \
-    tar -zxf apollo.tar.gz && \
+# RUN wget ${APOLLO_URL} -O apollo.tar.gz && tar -zxf apollo.tar.gz && \
+RUN mv /tmp/apollo-${VERSION}.tar.gz /apollo.tar.gz && tar -zxf apollo.tar.gz && \
     rm apollo.tar.gz && test -e apollo-${VERSION} && \
-    sed -e "s/db_password=/db_password=toor/g"  \
+    sed -e "s/db_password=/db_password=123qwe/g"  \
         -e "s/^dev_meta.*/dev_meta=http:\/\/localhost:${DEV_CONFIG_PORT}/" \
         -e "s/^fat_meta.*/fat_meta=http:\/\/localhost:${FAT_CONFIG_PORT}/" \
         -e "s/^uat_meta.*/uat_meta=http:\/\/localhost:${UAT_CONFIG_PORT}/" \
