@@ -1,37 +1,6 @@
-# docker-apollo
-本镜像主要是引用于[idoop/docker-apollo](https://github.com/idoop/docker-apollo)的镜像，在此镜像的基础上加入了EUREKA注册地址是Docker内网IP转为可以配置为宿主机IP的功能，为了解决本地IDEA环境开发调试，无法连接到meta server的问题
-
 ## Apollo Version: 
 
 - [`1.6.0`](https://github.com/ctripcorp/apollo/releases/tag/v1.6.0) `latest`
-
-## 我做了什么
-
-* DockerFile
-
-  ```bash
-  # # 加入EUREKA IP可以指定为宿主机
-  ENV EUREKA_IP ""
-  ```
-
-* bootstrap.yml
-
-  ```yml
-  # 在adminservice和configservice的bootstrap.yml加入了配置
-  eureka:
-    instance:
-      ip-address: ${eureka.instance.ip-address}
-  ```
-
-* start.sh
-
-  ```bash
-  # 在adminservice和configservice的start.sh加入了-Deureka.instance.ip-address=$EUREKA_IP的启动参数
-  if [ "$DS_URL"x != x ]
-  then
-      export JAVA_OPTS="$JAVA_OPTS -Dspring.datasource.url=$DS_URL -Dspring.datasource.username=$DS_USERNAME -Dspring.datasource.password=$DS_PASSWORD -Deureka.instance.ip-address=$EUREKA_IP"
-  fi
-  ```
 
 ## 启动前确认对应的数据库已建立
 
@@ -40,19 +9,27 @@
 ## 使用 Docker Compose 启动
 假设想要开启Protal/Dev/Fat,那么建立一个`docker-compose.yaml`文件,内容大致如下所示,只需将mysql数据库地址与库名以及账号密码替换为自己的,并配置好数据库:
 ``` yaml
-version: '1.1'
+version: '2.2'
 services:
   apollo:
     image: michaelliu/apollo:latest
+    container_name: apollo
+    restart: always
+    ports:
+      - "8070:8070"
+      - "8090:8090"
+      - "8080:8080"
     volumes:
       - ./logs:/opt
     environment:
+      # EUREKA IP 配置为宿主机
+      DEV_LB: 192.168.31.192
       PORTAL_DB: jdbc:mysql://192.168.31.192:3306/ApolloPortalDB?characterEncoding=utf8
       PORTAL_DB_USER: root
       PORTAL_DB_PWD: password
-      
-      # 开启dev环境, 默认端口: config 8080, admin 8090
+
       DEV_DB: jdbc:mysql://192.168.31.192:3306/ApolloConfigDB?characterEncoding=utf8
       DEV_DB_USER: root
       DEV_DB_PWD: password
+
 ```

@@ -18,33 +18,22 @@ ENV VERSION=1.6.0 \
     UAT_CONFIG_PORT=8082 \
     PRO_CONFIG_PORT=8083
 
-# ARG APOLLO_URL=https://github.com/ctripcorp/apollo/archive/v${VERSION}.tar.gz
-
-COPY adminservice-bootstrap.yml /
-COPY configservice-bootstrap.yml /
+ARG APOLLO_URL=https://github.com/ctripcorp/apollo/archive/v${VERSION}.tar.gz
 
 COPY docker-entrypoint /usr/local/bin/docker-entrypoint
 COPY healthcheck    /usr/local/bin/healthcheck
 
 # 由于国内github的速度超慢问题，可以选择屏蔽掉从github下载，如果是docker hub自动构建可以选择wget
-COPY apollo-${VERSION}.tar.gz /tmp/
-# 加入EUREKA IP可以指定为宿主机
-ENV EUREKA_IP ""
+# COPY apollo-${VERSION}.tar.gz /tmp/
 
-# RUN wget ${APOLLO_URL} -O apollo.tar.gz && tar -zxf apollo.tar.gz && \
-RUN mv /tmp/apollo-${VERSION}.tar.gz /apollo.tar.gz && tar -zxf apollo.tar.gz && \
+RUN wget ${APOLLO_URL} -O apollo.tar.gz && tar -zxf apollo.tar.gz && \
+# RUN mv /tmp/apollo-${VERSION}.tar.gz /apollo.tar.gz && tar -zxf apollo.tar.gz && \
     rm apollo.tar.gz && test -e apollo-${VERSION} && \
     sed -e "s/db_password=/db_password=123qwe/g"  \
         -e "s/^dev_meta.*/dev_meta=http:\/\/localhost:${DEV_CONFIG_PORT}/" \
         -e "s/^fat_meta.*/fat_meta=http:\/\/localhost:${FAT_CONFIG_PORT}/" \
         -e "s/^uat_meta.*/uat_meta=http:\/\/localhost:${UAT_CONFIG_PORT}/" \
         -e "s/^pro_meta.*/pro_meta=http:\/\/localhost:${PRO_CONFIG_PORT}/" -i apollo-${VERSION}/scripts/build.sh && \
-    cp -aR adminservice-bootstrap.yml apollo-${VERSION}/apollo-adminservice/src/main/resources/bootstrap.yml && \
-    cp -aR configservice-bootstrap.yml apollo-${VERSION}/apollo-configservice/src/main/resources/bootstrap.yml && \
-    rm -rf adminservice-bootstrap.yml && \
-    rm -rf configservice-bootstrap.yml && \
-    sed -e "s/-Dspring.datasource.password=$DS_PASSWORD/& -Deureka.instance.ip-address=$EUREKA_IP/" -i apollo-${VERSION}/apollo-adminservice/src/main/scripts/startup.sh && \
-    sed -e "s/-Dspring.datasource.password=$DS_PASSWORD/& -Deureka.instance.ip-address=$EUREKA_IP/" -i apollo-${VERSION}/apollo-configservice/src/main/scripts/startup.sh && \
     bash apollo-${VERSION}/scripts/build.sh && rm -rf /root/.m2 && \
     mkdir /apollo-admin/dev /apollo-admin/fat /apollo-admin/uat /apollo-admin/pro /apollo-config/dev /apollo-config/fat /apollo-config/uat /apollo-config/pro /apollo-portal -p && \
     mv apollo-${VERSION}/apollo-portal/target/apollo-portal-${VERSION}-github.zip  \

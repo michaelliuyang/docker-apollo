@@ -1,17 +1,21 @@
-version: '1.1'
+version: '2.2'
 services:
   apollo:
     image: michaelliu/apollo:latest
     container_name: apollo
-    network_mode: "host"
     restart: always
+    ports:
+      - "8070:8070"
+      - "8090:8090"
+      - "8080:8080"
     volumes:
-      - ./logs:/opt/logs
+      - ./logs:/opt
     environment:
-      PORTAL_DB: jdbc:mysql://0.0.0.0:3306/ApolloPortalDB?characterEncoding=utf8
+      DEV_LB: 192.168.31.192
+      PORTAL_DB: jdbc:mysql://192.168.31.192:3306/ApolloPortalDB?characterEncoding=utf8
       PORTAL_DB_USER: root
       PORTAL_DB_PWD: password
 
-      DEV_DB: jdbc:mysql://0.0.0.0:3306/ApolloConfigDB?characterEncoding=utf8
+      DEV_DB: jdbc:mysql://192.168.31.192:3306/ApolloConfigDB?characterEncoding=utf8
       DEV_DB_USER: root
       DEV_DB_PWD: password
